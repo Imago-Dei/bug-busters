@@ -144,6 +144,7 @@ struct Menu {
 			searchStudentCLI();
 			break;
 		case 'u':
+			updateStudentCLI();
 			break;
 		default:
 			break;
@@ -237,7 +238,7 @@ struct Menu {
 		}
 	}
 
-	void searchStudentCLI()
+	std::pair<std::vector<Student>::iterator, bool> searchStudentCLI()
 	{
 		// ask user to select the search type
 		int option;
@@ -246,6 +247,7 @@ struct Menu {
 		option = getchar();
 
 		string searchQuery;
+		bool validOptionChosen = true;
 		std::pair<std::vector<Student>::iterator, bool> searchResult;
 		// perform search based on search type
 		switch (option)
@@ -269,19 +271,51 @@ struct Menu {
 		default:
 			clearBuffer();
 			cout << "Error: Invalid selection.\n";
-			return;
+			validOptionChosen = false;
 			break;
 		}
 
-		// output search result
+		if (validOptionChosen)
+		{
+			// output search result
+			if (searchResult.second)
+			{
+				cout << "Name, USF ID, Email, Presentation grade, Essay grade, Term Project grade\n";
+				cout << *searchResult.first << endl;
+				return searchResult;
+			}
+			else
+			{
+				cout << "Error: No results found\n";
+				return searchResult;
+			}
+		}
+	}
+
+	void updateStudentCLI()
+	{
+		std::pair<std::vector<Student>::iterator, bool> searchResult = searchStudentCLI();
 		if (searchResult.second)
 		{
-			cout << "Name, USF ID, Email, Presentation grade, Essay grade, Term Project grade\n";
-			cout << *searchResult.first << endl;
-		}
-		else
-		{
-			cout << "Error: No results found\n";
+			// get user input for field to update
+			int field;
+			cout << "Which field would you like to update? Select one of the following options\n"
+				<< "n: name\n"
+				<< "u: USF ID\n"
+				<< "m: email\n"
+				<< "p: presentation grade\n"
+				<< "e: essay grade\n"
+				<< "t: term project grade\n"
+				<< "Enter option: ";
+			field = getchar();
+
+			switch (field)
+			{
+			case 'n':
+
+			default:
+				break;
+			}
 		}
 	}
 };
