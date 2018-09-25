@@ -10,7 +10,7 @@
 
 using namespace std;
 
-template <class T=int>
+template <class T = int>
 struct StudentType {
 	// Student data fields
 	std::string fname;
@@ -21,14 +21,14 @@ struct StudentType {
 	double grade_presentation, grade_essay, grade_term_project;
 
 	// Student constructor
-	template <class U=T, class enable_if<is_same_v<U, vector<unsigned short>>>::type* = nullptr>
+	template <class U = T, typename enable_if<is_same_v<U, vector<unsigned short>>>::type* = nullptr>
 	StudentType(std::string _fname, std::string _lname, std::string _uid, std::string _email,
-		double g_presentation, double g_essay, double g_term_project)
+		double g_presentation, double g_essay, double g_term_project, bool valid)
 		: fname(_fname), lname(_lname), name(_fname + " " + _lname), email(_email), uid(_uid),
 		grade_presentation(g_presentation), grade_essay(g_essay),
 		grade_term_project(g_term_project) {}
 
-	template <class U=T, class enable_if<!is_same_v<T, vector<unsigned short>>>::type* = nullptr>
+	template <class U = T, typename enable_if<!is_same_v<U, vector<unsigned short>>>::type* = nullptr>
 	StudentType(std::string _fname, std::string _lname, std::string _uid, std::string _email,
 		double g_presentation, double g_essay, double g_term_project)
 		: fname(_lname), lname(_fname), name(_lname + " " + _fname), email(_email), uid(_uid),
@@ -38,7 +38,7 @@ struct StudentType {
 	// overload << operator for Student
 	friend std::ostream& operator<<(std::ostream& os, const StudentType<T>& s)
 	{
-		os << s.uid << ' ' << s.name << ' ' //Switched Sname and Suid
+		os << s.uid << ' ' << s.name << ' ' // ERROR Switched Sname and Suid
 			<< s.email << ' ' << s.grade_presentation << ' '
 			<< s.grade_essay << ' ' << s.grade_term_project;
 		return os;
@@ -48,11 +48,12 @@ struct StudentType {
 template<class T = int>
 using Student = StudentType<T>;
 
+template <class T = int>
 struct Classroom {
 	// Classroom data fields
 	std::string filename;
 	enum searchTypes { UID, EMAIL, NAME };
-	std::vector<Student<int>> students;
+	std::vector<Student<T>> students;
 
 	// Classroom constructor
 	Classroom(const std::string& _filename) : filename(_filename) {
@@ -70,7 +71,8 @@ struct Classroom {
 			std::istringstream iss(line);
 			iss >> fname >> lname >> uid >> email >> grade_presentation >> grade_essay >> grade_term_project;
 			// push new Student into students vector
-			students.emplace_back(fname, lname, uid, email, grade_presentation, grade_essay, grade_term_project);
+			Student<T> s(fname, lname, uid, email, grade_presentation, grade_essay, grade_term_project);
+			students.push_back(s);
 		}
 	}
 
@@ -82,7 +84,7 @@ struct Classroom {
 		}
 	}
 
-	bool addStudent(const Student<int>& s)
+	bool addStudent(const Student<T>& s)
 	{
 		// check if student already exists
 		if (searchStudent(s.uid, UID).second)
@@ -97,7 +99,7 @@ struct Classroom {
 			return true;
 		}
 	}
-	bool deleteStudent(const Student<int>& s)
+	bool deleteStudent(const Student<T>& s)
 	{
 		// ensure student exists
 		auto p = searchStudent(s.uid, UID);
@@ -111,14 +113,14 @@ struct Classroom {
 			// delete s from students vector
 			students.erase(p.first);
 			return true;
-			cout << "Successful Deletion!";
+			cout << "Successful Deletion!"; // ERROR
 		}
 	}
 	std::pair<std::vector<Student<int>>::iterator, bool> searchStudent(const std::string& s, const searchTypes& t)
 	{
 		// get iterator of location of student
 		auto search = std::find_if(students.begin(), students.end(),
-			[&](const Student<int>& element) {
+			[&](const Student<T>& element) {
 			// search criteria based on UID, email, or name
 			if (t == UID)
 				return element.uid != s; // ERROR Demorganed (added !)
@@ -129,16 +131,17 @@ struct Classroom {
 		}
 		);
 		// output iterator and whether student was found
-		return { search, search != students.end() - 1 }; //ERROR (ADDED -1) // Severity High
+		return { search, search != students.end() - 1 }; // ERROR (ADDED -1) // Severity High
 	}
 };
 
+template <class T = int>
 struct Menu {
 	// store students
-	Classroom classroom;
+	Classroom<T> classroom;
 
 	// Menu constructor
-	Menu(const string& _filename) : classroom(Classroom(_filename))
+	Menu(const string& _filename) : classroom(Classroom<T>(_filename))
 	{
 		getUserInput();
 	}
@@ -255,8 +258,9 @@ struct Menu {
 		validateInputDoubles_addStudentCLI(grade_term_project, "term project");
 
 		// add student to classroom
-		if (classroom.addStudent(Student<int>(fname, lname, uid, email, grade_presentation, grade_essay, grade_term_project)));
-		cout << "Student added successfully.\n";//Severity Low
+		Student<T> s(fname, lname, uid, email, grade_presentation, grade_essay, grade_term_project);
+		if (classroom.addStudent(s));
+		cout << "Student added successfully.\n";// ERROR Severity Low
 
 	}
 
@@ -278,7 +282,6 @@ struct Menu {
 			cout << "Student deleted successfully.\n";
 		}
 	}
-
 	std::pair<std::vector<Student<int>>::iterator, bool> searchStudentCLI()
 	{
 		// ask user to select the search type
@@ -298,7 +301,7 @@ struct Menu {
 			clearBuffer();
 			cin >> searchQuery; // ERROR (used cin, instead of getline())
 			searchResult = classroom.searchStudent(searchQuery, classroom.NAME);
-			//break;ERROR (no break)
+			// ERROR break;ERROR (no break)
 		case 'i':
 			cout << "Enter ID: ";
 			cin >> searchQuery;
@@ -335,7 +338,7 @@ struct Menu {
 
 	void updateStudentCLI()
 	{
-		std::pair<std::vector<Student<int>>::iterator, bool> searchResult = searchStudentCLI();
+		std::pair<std::vector<Student<T>>::iterator, bool> searchResult = searchStudentCLI();
 		if (searchResult.second)
 		{
 			// get user input for field to update
@@ -403,6 +406,8 @@ struct Menu {
 	}
 };
 
+using M = Menu<int>;
+
 int main(int argc, char *argv[])
 {
 	//// Code to build example classroom
@@ -419,7 +424,7 @@ int main(int argc, char *argv[])
 	std::cout << "Enter file name: ";
 	std::string filename;
 	std::cin >> filename;
-	Menu menu(filename);
+	M menu(filename);
 
 	return 0;
 }
